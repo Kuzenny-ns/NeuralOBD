@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralOBD</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}?v={{ time }}">
+    
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+</head>
+<body>
+    <h1>NeuralOBD Business Finder</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label for="file">Upload File:</label>
+        <input type="file" name="file" required><br><br>
+
+        <label for="city">Choose City:</label>
+        <select name="city" required>
+            {% for city in cities %}
+                <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if businesses %}
+    <div id="map" style="height: 500px; width: 80%; margin: 0 auto; border: 3px solid #2980b9;"></div>
+    
+    {% block javascript %}
+    <script>
+        console.log("Map script initialized.");
+        var map = L.map('map').setView([{{ map_loc.lat }}, {{ map_loc.lon }}], 13);//Make dynamic lon and lat
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+    </script>
+    {% endblock %}
+        {% if troubles %}
+        <h2>You may have the following problem:</h2>
+            {%for trouble in troubles%}
+            <h3>{{ trouble }}</h3>
+            {% endfor %}
+        {% endif %}
+        <h2>Autoshops in {{ city }}:</h2>
+        <ul>
+            {% for business in businesses %}
+                <li id="{{ business.biz_id }}">
+                    <div style="flex: 1; height: 200px;">
+                        <img src="{{ business.photo_link }}" alt="{{ business.biz_id }}"> 
+                    </div>
+                    <div style="flex: 5;">
+                        {{ business.name }}<br>
+                        Address: {{ business.address }}<br>
+                        Rating: {{ business.rating }}<br>
+                        Categories: {{ business.categories }}
+                    </div>
+                    <div style="flex: 3;">
+                        <form action="{{ business.link }}" style="background-color: rgba(0, 0, 0, 0);
+                        padding: 0px; margin:
+                        0px auto; border-radius: 0px; width: 50%;
+                        box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1);
+                        position: relative; bottom: -150px;">
+                            <input type="submit" value="Yelp Page" />
+                        </form>    
+                    </div>      
+                </li>
+                <script>
+                    var name = "{{ business.name }}"
+                    var address = "{{ business.address }}"
+                    var rating = "{{ business.rating }}"
+                    var image = "{{ business.photo_link }}"
+
+                    var popupContent = `
+                        <div style="text-align: left;">
+                            <h4>${name}</h4>
+                            <img src="${image}" alt="${name}" style="width: 100%; max-width: 200px; border-radius: 8px;"/>
+                            <p><strong>Address:</strong> ${address}</p>
+                            <p><strong>Rating:</strong> ${rating} ⭐</p>
+                        </div>`;
+
+
+                    var marker = L.marker([{{ business.lat }}, {{ business.lon }}]).addTo(map)
+                        .bindPopup(popupContent);
+
+
+
+                    marker.on('dblclick', function() {
+                        var listItem = document.getElementById("{{ business.biz_id }}");
+                        listItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        listItem.classList.add('highlight');
+                        setTimeout(() => listItem.classList.remove('highlight'), 2000);
+                    });
+                </script>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+
+    <!-- <ul>
+            <li>
+                <div style="flex: 1; height: 200px;">
+                    <img src="https://s3-media0.fl.yelpcdn.com/bphoto/LhBsFiJ9fMmIxZSdrRRa-w/ls.jpg" alt="f2qbHO_YJCcyTJBbQxdsPw"> 
+                </div>
+                <div style="flex: 5;">
+                    Mobile Auto Repair Services<br>
+                    Address: None<br>
+                    Rating: 5.0<br>
+                    Categories: [&#39;Auto Repair&#39;, &#39;Oil Change Stations&#39;]
+                </div>
+                <div style="flex: 3;">
+                    <form action="https://www.yelp.com/biz/mobile-auto-repair-services-garden-grove?osq=Auto+Services&amp;override_cta=Get+pricing" style="background-color: rgba(0, 0, 0, 0);
+                    padding: 0px; margin:
+                    0px auto; border-radius: 0px; width: 50%;
+                    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1);
+                    position: relative; bottom: -150px;">
+                        <input type="submit" value="Yelp Page" />
+                    </form>    
+                </div>          
+            </li>
+    </ul> -->
+
+    
+    
+</body>
+</html>
