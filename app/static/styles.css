@@ -37,7 +37,8 @@ form label {
     margin-bottom: 8px;
 }
 
-form input[type="file"], 
+form input[type="file"],
+form input[type="text"], 
 form select, 
 form button {
     width: 100%;
@@ -46,6 +47,11 @@ form button {
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
+}
+
+form input[type="text"]
+{
+    padding-bottom: 120px;
 }
 
 form button {

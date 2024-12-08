@@ -68,8 +68,8 @@ async def classify(file: UploadFile = File(...)):
             "Percentages": percentage_dict,
             "Prediciton": list(dict.fromkeys(predicted_labels))}
 
-@router.get("/findAutoShop/")
-async def find_auto_shop(city: str, trouble_code: List[str], db: Session = Depends(get_db)):
+@router.get("/findAutoShopDTC/")
+async def find_auto_shop_DTC(city: str, trouble_code: List[str], db: Session = Depends(get_db)):
     trouble_dict = {"C0300": ['Auto Repair', 'DIY Auto Shop', 'Transmission Repair'],
                     'NO_ERROR': ['Auto Repair'],
                     'P0078-B0004-P3000': ['Auto Repair', 'Smog Check Stations', 'Wheel & Rim Repair'],
@@ -92,6 +92,32 @@ async def find_auto_shop(city: str, trouble_code: List[str], db: Session = Depen
 
 
     #Query to find businesses based on city and having appropriate category
+    results = db.query(AutoShop).join(AutoShop.locations).join(AutoShop.categories).filter(
+        Location.city == city,
+        Category.name.in_(category_list)
+    ).order_by(AutoShop.rating.desc()).all()
+
+    response = []
+    for carshop in results:
+        categories = [category.name for category in carshop.categories]
+        response.append({
+            "id": carshop.id,
+            "biz_id": carshop.biz_id,
+            "name": carshop.name,
+            "rating": carshop.rating,
+            "address": carshop.formatted_address,
+            "lat": carshop.latitude,
+            "lon": carshop.longitude,
+            "city": city,
+            "categories": categories,
+            "photo_link": carshop.photo_url,
+            "link": carshop.business_url
+        })
+    
+    return response
+
+@router.get("/findAutoShopCategires/")
+async def find_auto_shop_categorie(city: str, category_list: List[str], db: Session = Depends(get_db)):
     results = db.query(AutoShop).join(AutoShop.locations).join(AutoShop.categories).filter(
         Location.city == city,
         Category.name.in_(category_list)

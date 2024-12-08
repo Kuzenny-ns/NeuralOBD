@@ -3,11 +3,13 @@ from sqlalchemy import create_engine
 
 from app.models import AutoShop, Category, Location
 from app.models import SessionLocal
-from app.config import DB_CONFIG
-username = DB_CONFIG["username"]
-password = DB_CONFIG["password"]
-host = DB_CONFIG["host"]
-database = DB_CONFIG["database"]
+import os
+from dotenv import load_dotenv
+load_dotenv()
+username = os.getenv("DB_username")
+password = os.getenv("DB_password")
+host = os.getenv("DB_host")
+database = os.getenv("DB_database")
 
 def create_DB_from_csv():
     # csv_file = "cleaned_file.csv"

@@ -1,11 +1,13 @@
-from app.config import DB_CONFIG
-username = DB_CONFIG["username"]
-password = DB_CONFIG["password"]
-host = DB_CONFIG["host"]
-database = DB_CONFIG["database"]
-
 from sqlalchemy import Column, Integer, String, Boolean, Float, Double, ForeignKey, Table, create_engine
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+
+import os
+from dotenv import load_dotenv
+load_dotenv()
+username = os.getenv("DB_username")
+password = os.getenv("DB_password")
+host = os.getenv("DB_host")
+database = os.getenv("DB_database")
 
 Base = declarative_base()
 
