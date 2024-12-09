@@ -25,6 +25,13 @@ shop_locations = Table(
     Column("location_id", Integer, ForeignKey("locations.id"), primary_key=True),
 )
 
+error_categories = Table(
+    "error_categories",
+    Base.metadata,
+    Column("error_id", Integer, ForeignKey("errors.id"), primary_key=True),
+    Column("category_id", Integer, ForeignKey("categories.id"), primary_key=True),
+)
+
 class AutoShop(Base):
     __tablename__ = "auto_shops"
 
@@ -51,16 +58,27 @@ class Category(Base):
     name = Column(String(255), unique=True, nullable=False)
 
     shops = relationship("AutoShop", secondary=shop_categories, back_populates="categories")
+    errors = relationship("Error", secondary=error_categories, back_populates="categories")
 
 class Location(Base):
     __tablename__ = "locations"
 
     id = Column(Integer, primary_key=True, index=True)
-    city = Column(String(255), nullable=False)
+    city = Column(String(255), unique=True, nullable=False)
     region = Column(String(255), nullable=False)
+    latitude = Column(Double)
+    longitude = Column(Double)
 
     shops = relationship("AutoShop", secondary=shop_locations, back_populates="locations")
 
+class Error(Base):
+    __tablename__ = "errors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    error_code = Column(String(255), unique=True, nullable=False)
+    description = Column(String(255), nullable=False)
+
+    categories = relationship("Category", secondary=error_categories, back_populates="errors")
 
 engine = create_engine(url=f"mysql+mysqlconnector://{username}:{password}@{host}/{database}")
 Base.metadata.create_all(bind=engine)

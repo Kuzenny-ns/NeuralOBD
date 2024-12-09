@@ -7,6 +7,7 @@ from app.routes import get_db
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.routes import router, classify, find_auto_shop_DTC, find_auto_shop_categorie
+from app.models import Category, Location, SessionLocal
 
 import os
 import json
@@ -16,46 +17,23 @@ api_key = os.getenv("API_KEY")
 
 from huggingface_hub import InferenceClient
 
-categories = ["Auto Repair", "Oil Change Stations", "Transmission Repair", "Smog Check Stations",
-              "Tires", "Wheel & Rim Repair", "Body Shops", "DIY Auto Shop",
-              "Auto Parts & Supplies", "Hybrid Car Repair", "Car Dealers", "Used Car Dealers",
-              "Windshield Installation & Repair", "Towing", "Auto Customization", "Car Inspectors",
-              "Auto Detailing", "Commercial Truck Repair", "Gas Stations", "Roadside Assistance",
-              "Trailer Repair", "Auto Glass Services", "Interlock Systems", "Machine Shops",
-              "Car Buyers", "Auto Upholstery", "Registration Services", "Mobile Dent Repair",
-              "Convenience Stores", "Auto Security", "Car Wash", "RV Repair",
-              "Truck Rental", "Trailer Rental", "Race Tracks"
-            ]
-
 import time
 import csv
 
-CITIES_NAMES = ["Los-Angeles", "San-Francisco", "San-Diego", "San-Jose",
-          "Fresno", "Sacramento", "Long-Beach", "Oakland",
-          "Bakersfield", "Anaheim", "Santa-Ana", "Riverside",
-          "Irvine", "Chula-Vista", "Fontana", "Ontario",
-          "Modesto", "Glendale", "Huntington Beach", "Lancaster"]
 
-CITIES_LOCATION = {"Los-Angeles": {"lat": 34.0536909, "lon": -118.242766},
-                   "San-Francisco": {"lat": 37.7792588, "lon": -122.4193286},
-                   "San-Diego": {"lat": 32.7174202, "lon": -117.162772},
-                   "San-Jose": {"lat": 37.3361663, "lon": -121.890591},
-                   "Fresno": {"lat": 36.7394421, "lon": -119.78483},
-                   "Sacramento": {"lat": 38.5810606, "lon": -121.493895},
-                   "Long-Beach": {"lat": 33.7690164, "lon": -118.191604},
-                   "Oakland": {"lat": 37.8044557, "lon": -122.271356},
-                   "Bakersfield": {"lat": 35.3738712, "lon": -119.019463},
-                   "Anaheim": {"lat": 33.8347516, "lon": -117.911732},
-                   "Santa-Ana": {"lat": 33.7494951, "lon": -117.873221},
-                   "Riverside": {"lat": 33.9824949, "lon": -117.374238},
-                   "Irvine": {"lat": 33.6856969, "lon": -117.825981},
-                   "Chula-Vista": {"lat": 32.6400541, "lon": -117.084195},
-                   "Fontana": {"lat": 34.0922947, "lon": -117.43433},
-                   "Ontario": {"lat": 34.068241119384766, "lon": -117.65079498291016},
-                   "Modesto": {"lat": 37.6393419, "lon": -120.9968892},
-                   "Glendale": {"lat": 34.1469416, "lon": -118.2478471},
-                   "Huntington-Beach": {"lat": 33.6783336, "lon": -118.000016},
-                   "Lancaster": {"lat": 34.6981064, "lon": -118.1366153}}
+session = SessionLocal()
+cats = session.query(Category.name).all()
+categories = [name[0] for name in cats]
+
+city_names = session.query(Location.city).all()
+CITIES_NAMES = [city[0] for city in city_names]
+
+cities_data = session.query(Location).all()
+CITIES_LOCATION = {
+    city.city: {"lat": city.latitude, "lon": city.longitude}
+    for city in cities_data
+}
+session.close()
 
 templates = Jinja2Templates(directory="app\\templates")
 app = FastAPI()
@@ -73,7 +51,7 @@ async def post_root(request: Request, file: UploadFile = File(...),
                     dialog_input: str = Form(...), db: Session = Depends(get_db)):
     
     if submit_button == "CSV_button":
-        file_response = await classify(file)
+        file_response = await classify(file, db)
 
         businesses_response = await find_auto_shop_DTC(city, file_response["Prediciton"], db)
 
@@ -112,8 +90,6 @@ async def post_root(request: Request, file: UploadFile = File(...),
             "microsoft/Phi-3-mini-4k-instruct",
             token=api_key,
         )
-
-        #My car makes a loud noise when braking.
 
         prompt = f"User's description of car problem: '{dialog_input}'\n\n" \
                 f"Possible categories of auto shop services:\n" + "\n".join([f"- {cat}" for cat in categories]) + "\n\n" \

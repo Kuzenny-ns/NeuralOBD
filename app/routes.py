@@ -3,7 +3,7 @@ import tensorflow as tf
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sqlalchemy.orm import Session
-from app.models import AutoShop, Category, Location
+from app.models import AutoShop, Category, Location, Error
 from app.models import SessionLocal
 from io import StringIO
 from typing import List
@@ -27,7 +27,7 @@ async def diagnose():
     return {"message": "Diagnosis endpoint"}
 
 @router.get("/classify/")
-async def classify(file: UploadFile = File(...)):
+async def classify(file: UploadFile = File(...), db: Session = Depends(get_db)):
     model = tf.keras.models.load_model('models/trouble_code_classifier_tensorflow_100_epochs_acc95.keras')
     
     content = await file.read()
@@ -50,10 +50,9 @@ async def classify(file: UploadFile = File(...)):
     
     predicted_classes = predictions.argmax(axis=-1)
     
-    error_classes = ['C0300', 'NO_ERROR', 'P0078-B0004-P3000', 'P0078-U1004-P3000',
-                     'P0079-C1004-P3000', 'P0079-P1004-P3000', 'P0079-P2004-P3000', 'P007E-P2036-P18D0',
-                     'P007E-P2036-P18E0', 'P007E-P2036-P18F0', 'P007F-P2036-P18D0', 'P007F-P2036-P18E0',
-                     'P007F-P2036-P18F0', 'P0133']
+    error_names = db.query(Error.error_code).all()
+    error_classes = [error[0] for error in error_names]
+
     predicted_labels = [error_classes[class_idx] for class_idx in predicted_classes]
 
     counts = Counter(predicted_labels)
@@ -70,20 +69,11 @@ async def classify(file: UploadFile = File(...)):
 
 @router.get("/findAutoShopDTC/")
 async def find_auto_shop_DTC(city: str, trouble_code: List[str], db: Session = Depends(get_db)):
-    trouble_dict = {"C0300": ['Auto Repair', 'DIY Auto Shop', 'Transmission Repair'],
-                    'NO_ERROR': ['Auto Repair'],
-                    'P0078-B0004-P3000': ['Auto Repair', 'Smog Check Stations', 'Wheel & Rim Repair'],
-                    'P0078-U1004-P3000': ['Auto Repair', 'Smog Check Stations'],
-                    'P0079-C1004-P3000': ['Auto Repair', 'Smog Check Stations', 'Wheel & Rim Repair'],
-                    'P0079-P1004-P3000': ['Auto Repair', 'Smog Check Stations'],
-                    'P0079-P2004-P3000': ['Auto Repair', 'Smog Check Stations'],
-                    'P007E-P2036-P18D0': ['Auto Repair'],
-                    'P007E-P2036-P18E0': ['Auto Repair'],
-                    'P007E-P2036-P18F0': ['Auto Repair'],
-                    'P007F-P2036-P18D0': ['Auto Repair'],
-                    'P007F-P2036-P18E0': ['Auto Repair'],
-                    'P007F-P2036-P18F0': ['Auto Repair'],
-                    'P0133': ['Auto Repair']}
+    errors_with_categories = db.query(Error).all()
+    trouble_dict = {
+        error.error_code: [category.name for category in error.categories]
+        for error in errors_with_categories
+    }
     
     category_list = []
     for code in trouble_code:
