@@ -7,7 +7,7 @@ from app.routes import get_db
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.routes import router, classify, find_auto_shop_DTC, find_auto_shop_categorie
-from app.models import Category, Location, SessionLocal
+from app.models import Category, Location, Error, SessionLocal
 
 import os
 import json
@@ -53,25 +53,26 @@ async def post_root(request: Request, file: UploadFile = File(...),
     if submit_button == "CSV_button":
         file_response = await classify(file, db)
 
-        businesses_response = await find_auto_shop_DTC(city, file_response["Prediciton"], db)
+        trouble_dict = {}
+        for class_label, percentage in file_response["Prediciton"].items():
+            trouble_dict[class_label[0]] = percentage
 
-        #TODO: Delete after clasification labeling that do not use multiple error per label
-        separated_labels = []
-        for item in file_response["Prediciton"]:
-            if '-' in item:
-                separated_labels.extend(item.split('-'))
-            else:
-                separated_labels.append(item)
-
-        dict_filename = "obd-trouble-codes.csv"
         trouble_list = []
-        with open(dict_filename, mode='r') as file:
-            csv_reader = csv.reader(file)
-            for row in csv_reader:
-                for resp in separated_labels:
-                    if (row[0] == resp):
-                        trouble_list.append(str(row[1]) + "(" + str(file_response["Percentages"][resp]) + "%)")
+        if len(trouble_dict) > 1:
+            del trouble_dict["NO_ERROR"]
 
+        for key in list(trouble_dict.keys()):
+            if trouble_dict[key] < 4.5:
+                del trouble_dict[key]
+
+        for class_label, percentage in trouble_dict.items():
+            trouble_list.append(class_label)
+            print(f"{class_label}: {percentage:.2f}%")
+
+        results = db.query(Error).filter(Error.error_code.in_(trouble_list)).all()
+        descriptions = [result.description for result in results]
+
+        businesses_response = await find_auto_shop_DTC(city, trouble_list, db)
 
         locations = []
         for biz in businesses_response:
@@ -80,7 +81,7 @@ async def post_root(request: Request, file: UploadFile = File(...),
         return templates.TemplateResponse("index.html", {
             "request": request,
             "cities": CITIES_NAMES,
-            "troubles": trouble_list,
+            "troubles": descriptions,
             "businesses": businesses_response,
             "city": city,
             "map_loc": CITIES_LOCATION[city]

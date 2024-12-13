@@ -104,7 +104,7 @@ def populate():
 
             db.commit()
 
-    df2 = pd.read_csv("obd-trouble-codes_3.csv")
+    df2 = pd.read_csv("obd-trouble-codes-for-db.csv")
     df2["categories"] = df2["categories"].apply(lambda x: eval(x))
 
     for index, row in df2.iterrows():

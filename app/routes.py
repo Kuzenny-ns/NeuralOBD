@@ -10,8 +10,8 @@ from typing import List
 
 from models.model_training import normalize_percentages_and_formating
 
-
 from collections import Counter
+
 def get_db():
     db = SessionLocal()
     try:
@@ -28,7 +28,8 @@ async def diagnose():
 
 @router.get("/classify/")
 async def classify(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    model = tf.keras.models.load_model('models/trouble_code_classifier_tensorflow_100_epochs_acc95.keras')
+    # model = tf.keras.models.load_model('models/trouble_code_classifier_tensorflow_100_epochs_acc95.keras')
+    model = tf.keras.models.load_model('models/trouble_code_classifier_sigmoid_output.keras')
     
     content = await file.read()
     csv_data = StringIO(content.decode("utf-8"))
@@ -48,24 +49,26 @@ async def classify(file: UploadFile = File(...), db: Session = Depends(get_db)):
     
     predictions = model.predict(X_scaled)
     
-    predicted_classes = predictions.argmax(axis=-1)
+    threshold = 0.99
+    predicted_classes = (predictions > threshold).astype(int)
     
     error_names = db.query(Error.error_code).all()
     error_classes = [error[0] for error in error_names]
 
-    predicted_labels = [error_classes[class_idx] for class_idx in predicted_classes]
+    predicted_class_names = [[error_names[i] for i, val in enumerate(row) if val == 1] for row in predicted_classes]
 
-    counts = Counter(predicted_labels)
-    percentage_dict = {}
-    total = len(predicted_labels)
-    for item, count in counts.items():
-        percentage_dict[item] = round((count / total) * 100, 2)
-        print(f"{item} = {count}")
+    flattened_classes = [item for sublist in predicted_class_names for item in sublist]
+    class_counts = Counter(flattened_classes)
+    total_classes = len(flattened_classes)
+    class_percentages = {class_label: (count / total_classes) * 100 for class_label, count in class_counts.items()}
 
+    print("\n\n")
+    for class_label, percentage in class_percentages.items():
+        print(f"{class_label[0]}: {percentage:.2f}%")
+    print("\n\n")
 
     return {"Posible errors": error_classes,
-            "Percentages": percentage_dict,
-            "Prediciton": list(dict.fromkeys(predicted_labels))}
+            "Prediciton": class_percentages}
 
 @router.get("/findAutoShopDTC/")
 async def find_auto_shop_DTC(city: str, trouble_code: List[str], db: Session = Depends(get_db)):
@@ -74,7 +77,7 @@ async def find_auto_shop_DTC(city: str, trouble_code: List[str], db: Session = D
         error.error_code: [category.name for category in error.categories]
         for error in errors_with_categories
     }
-    
+
     category_list = []
     for code in trouble_code:
         category_list.extend(trouble_dict[code])

@@ -1,0 +1,18 @@
+error,description,categories
+B0004,Control of deployment of the driver's knee amplifier (malfunction),"['Auto Repair', 'Smog Check Stations']"
+C0300,RF TCS SOUMTR #1 CIRCUIT MALFUNCTION,"['Auto Repair', 'DIY Auto Shop', 'Transmission Repair']"
+C1004,Unknown citroen DTC_CODE_4,"['Auto Repair', 'Smog Check Stations', 'Wheel & Rim Repair']"
+NO_ERROR,Nothing wrong,['Auto Repair']
+P0078,Exhaust Valve Control Circuit (Bank 2),['Auto Repair']
+P0079,Exhaust Valve Control Circuit Low (Bank 2),['Auto Repair']
+P007E,"Turbocharger (TC) intercooler temperature sensor, bank 1",['Auto Repair']
+P007F,"Turbocharger (TC) intercooler temperature sensor, bank 1/2",['Auto Repair']
+P0133,O2 Sensor Circuit Slow Response (Bank 2 Sensor 1),['Auto Repair']
+P1004,VVT Control Signal: Low Input,['Auto Repair']
+P18D0,Unknown citroen DTC_CODE_1,['Auto Repair']
+P18E0,Unknown citroen DTC_CODE_2,['Auto Repair']
+P18F0,Unknown citroen DTC_CODE_3,['Auto Repair']
+P2004,Intake Manifold Runner Control Stuck Open (Bank 1),"['Auto Repair', 'Smog Check Stations']"
+P2036,Exhaust Gas Temperature Sensor Circuit High (Bank 2 Sensor 2),['Auto Repair']
+P3000,Rail Pressure Control: High Voltage Circuit,"['Auto Repair', 'Smog Check Stations']"
+U1004,SCP (J1850) Invalid or Missing Data for EEC Programming ,"['Auto Repair', 'Smog Check Stations']"
