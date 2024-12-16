@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from app.routes import router, classify, find_auto_shop_DTC, find_auto_shop_categorie
 from app.models import Category, Location, Error, SessionLocal
 
+import time
+
 import os
 import json
 from dotenv import load_dotenv
@@ -16,10 +18,6 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 
 from huggingface_hub import InferenceClient
-
-import time
-import csv
-
 
 session = SessionLocal()
 cats = session.query(Category.name).all()
@@ -139,5 +137,3 @@ async def post_root(request: Request, file: UploadFile = File(...),
             "city": city,
             "map_loc": CITIES_LOCATION[city]
         })
-
-    #return templates.TemplateResponse("index.html", {"request": request, "time": int(time.time()), "cities": CITIES_NAMES})

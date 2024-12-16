@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, Double, ForeignKey, Table, create_engine
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+from sqlalchemy_utils import database_exists, create_database
 
 import os
 from dotenv import load_dotenv
@@ -81,6 +82,8 @@ class Error(Base):
     categories = relationship("Category", secondary=error_categories, back_populates="errors")
 
 engine = create_engine(url=f"mysql+mysqlconnector://{username}:{password}@{host}/{database}")
+if not database_exists(engine.url): create_database(engine.url)
+
 Base.metadata.create_all(bind=engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

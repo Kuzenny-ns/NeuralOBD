@@ -59,8 +59,7 @@ def clean_data(input_filename: str, output_filename: str):
     #new_data = pd.concat(data.apply(lambda row: split_and_duplicate(row, 'TROUBLE_CODES'), axis=1).tolist(), ignore_index=True)
     data.to_csv(output_filename, index=False)
 
-def train_and_save(file_path, drop_columns, train_columns, class_column, model_name):
-    num_of_classes = 17    #9
+def train_and_save(file_path, drop_columns, train_columns, class_column, model_name, num_of_classes, epoch):
     data = pd.read_csv(file_path, low_memory=False)
     data = data.drop(columns=drop_columns)
 
@@ -97,17 +96,14 @@ def train_and_save(file_path, drop_columns, train_columns, class_column, model_n
 
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         model_name,  # Path where the best model will be saved
-        monitor='val_accuracy',  # Metric to monitor (you can use 'accuracy' or 'val_accuracy'
+        monitor='val_accuracy',  # Metric to monitor
         save_best_only=True,  # Save only the best model
         mode='max',  # Save when the monitored metric is maximized
         verbose=1  # Print a message when saving the model
     )
-    # class_w = {0: 12.0, 1: 6.0, 2: 12.0, 3: 1.0, 4: 12.0, 5: 12.0,
-    #            6: 12.0, 7: 12.0, 8: 6.0, 9: 12.0, 10: 12.0,
-    #            11: 12.0, 12: 12.0, 13: 12.0, 14: 12.0, 15: 12.0, 16: 12.0}
 
-    model.fit(X_train, y_train_onehot, epochs=100, batch_size=32,
-              validation_data=(X_test, y_test_onehot), callbacks=[checkpoint_callback]) # class_weight=class_w,
+    model.fit(X_train, y_train_onehot, epochs=epoch, batch_size=32,
+              validation_data=(X_test, y_test_onehot), callbacks=[checkpoint_callback])
 
     loss, accuracy = model.evaluate(X_test, y_test_onehot)
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
@@ -147,46 +143,6 @@ def local_classify(model_name, csv_data, feature_columns, error_names, columns_t
     for class_label, percentage in class_percentages.items():
         print(f"{class_label}: {percentage:.2f}%")
 
-    #df['predicted_class_names'] = ['; '.join(classes) for classes in predicted_class_names]
-    #df.to_csv('updated_file.csv', index=False)
-
-
-# clean_data('datasets/exp1_14drivers_14cars_dailyRoutes.csv',
-#            'datasets/exp1_14drivers_14cars_dailyRoutes_CLEANED.csv')
-# train_and_save('datasets/exp1_14drivers_14cars_dailyRoutes_CLEANED.csv',
-#                ['VEHICLE_ID'],
-#                ['ENGINE_POWER', 'ENGINE_COOLANT_TEMP', 'ENGINE_LOAD', 'ENGINE_RPM','INTAKE_MANIFOLD_PRESSURE',
-#                 'AIR_INTAKE_TEMP', 'THROTTLE_POS', 'TIMING_ADVANCE'],
-#                 'TROUBLE_CODES',
-#                 'models/trouble_code_classifier_tensorflow_100_epochs.keras')
-# local_classify('models/trouble_code_classifier_sigmoid_output.keras',
-#                '../OBD-II datasets/app_test.csv',
-#                ['ENGINE_POWER', 'ENGINE_COOLANT_TEMP', 'ENGINE_LOAD', 'ENGINE_RPM',
-#                 'INTAKE_MANIFOLD_PRESSURE', 'AIR_INTAKE_TEMP', 'THROTTLE_POS', 'TIMING_ADVANCE'],
-#                 ['B0004', 'C0300', 'C1004', 'NO_ERROR',
-#                  'P0078', 'P0079', 'P007E', 'P007F',
-#                  'P0133', 'P1004', 'P18D0', 'P18E0',
-#                  'P18F0', 'P2004', 'P2036', 'P3000',
-#                  'U1004'],
-#                  ['ENGINE_LOAD', 'THROTTLE_POS', 'TIMING_ADVANCE', 'ENGINE_POWER'])
-# local_classify('models/trouble_code_classifier_synth_data_5000.keras',
-#                #'test_trip_data_synth.csv',
-#                #'synth_data_rpm_load_intake_separate.csv',
-#                #'synth_rpm_load_intake_together.csv',
-#                'synth_data_RPM.csv',
-#                ['engine_rpm', 'throttle_position', 'mass_air_flow', 'engine_load',
-#                 'coolant_temp', 'intake_pressure', 'oxygen_sensor_voltage',
-#                 'wheel_speed_FL', 'wheel_speed_FR', 'wheel_speed_RL', 'wheel_speed_RR'],
-#                ['COOLANT_TEMP_TROUBLE', 'ENGINE_LOAD_TROUBLE', 'INTAKE_PRESSURE_TROUBLE',
-#                 'MASS_AIR_FLOW_TROUBLE', 'NO_TROUBLE', 'OXEGEN_SENSOR_VOLTAGE_TROUBLE',
-#                 'RPM_TROUBLE', 'THROTTLE_POSITION_TROUBLE', 'WHEEL_LOCKUP_TROUBLE'],
-#                [])
-
-# train_and_save('datasets/new_trip_data_synth.csv',
-#                ['time', 'abs_status', 'brake_pedal_position', 'steering_angle', 'door_status',
-#                 'airbag_status', 'hvac_status', 'lighting_status', 'can_bus_error'],
-#                ['engine_rpm', 'throttle_position', 'mass_air_flow', 'engine_load',
-#                 'coolant_temp', 'intake_pressure', 'oxygen_sensor_voltage',
-#                 'wheel_speed_FL', 'wheel_speed_FR', 'wheel_speed_RL', 'wheel_speed_RR'],
-#                 'diagnostics_class',
-#                 'models/trouble_code_classifier_synth_data_VER2.keras')
+    # Writes predictions as csv file
+    # df['predicted_class_names'] = ['; '.join(classes) for classes in predicted_class_names]
+    # df.to_csv('updated_file.csv', index=False)

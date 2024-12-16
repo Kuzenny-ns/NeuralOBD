@@ -124,7 +124,3 @@ def populate():
 
 
     print("Data has been successfully loaded into the database!")
-
-
-#create_DB_from_csv()
-#populate()
