@@ -1,6 +1,8 @@
 # NeuralOBD
 A web-based car diagnostics platform that uses neural networks to analyze uploaded OBD (On-Board Diagnostics) data, suggest potential issues, and recommend nearby workshops. The platform also includes a map feature to locate nearby auto repair shops.  
-Curently the model uses this Kaggle dataset: https://www.kaggle.com/datasets/cephasax/obdii-ds3
+Curently the model uses this Kaggle dataset: https://www.kaggle.com/datasets/cephasax/obdii-ds3  
+For language based responses microsoft/Phi-3-mini-4k-instruct model is used: https://huggingface.co/microsoft/Phi-3-mini-4k-instruct.
+
 
 ## Features
 - Upload and analyze OBD diagnostic files.
@@ -99,6 +101,7 @@ train_and_save('datasets/exp1_14drivers_14cars_dailyRoutes_CLEANED.csv',
 ### 3. local_classify() function
 - The script includes a `local_classify` function to classify new data using the trained model.
 - Normalizes input features, scales the data, and predicts the class probabilities.
+- For each given set of values model returns list of predictions. Variable `threshold` is responsible for what predictions will be considered true and which predictions should be discarded.
 
 Example use of function
 ```bash

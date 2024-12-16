@@ -104,20 +104,21 @@ async def post_root(request: Request, file: UploadFile = File(...),
             },
         )
         resp = json.loads(response.decode())[0]["generated_text"]
+        print(resp)
 
-        start_idx = resp.find("RESPONSE= ")
+        start_idx = resp.find("RESPONSE=[")
         response_text = ""
         if start_idx != -1:
-            start_idx += len("RESPONSE= ")
+            start_idx += len("RESPONSE=")
             end_idx = resp.find("\n", start_idx)
             if end_idx == -1:
                 response_text = resp[start_idx:]
             response_text = resp[start_idx:end_idx]
         
-        start_idx = resp.find("QUERY_CATEGORIES= ")
+        start_idx = resp.find("QUERY_CATEGORIES=[")
         query_cat = ""
         if start_idx != -1:
-            start_idx += len("QUERY_CATEGORIES= ")
+            start_idx += len("QUERY_CATEGORIES=")
             end_idx = resp.find("\n", start_idx)
             if end_idx == -1:
                 query_cat = resp[start_idx:]
